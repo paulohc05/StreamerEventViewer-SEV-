@@ -1,6 +1,10 @@
 <template>
     <div id="app">
         <Header></Header>
+
+        <main role="main" class="container text-center">
+            <router-view></router-view>
+        </main>
     </div>
 </template>
 
