@@ -11,6 +11,18 @@
 |
 */
 
+$router->group([
+    'prefix' => 'api'
+], function ($router) {
+
+    $router->get('/auth', 'AuthTwitchController@getAuthURL');
+
+});
+
+$router->get('redirecturi', function () use ($router) {
+    die('Great Scott!');
+});
+
 $router->get('/{route:.*}/', function () use ($router) {
     return view('home');
 });
