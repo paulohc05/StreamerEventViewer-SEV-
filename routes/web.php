@@ -14,9 +14,8 @@
 $router->group([
     'prefix' => 'api'
 ], function ($router) {
-
     $router->get('/auth', 'AuthTwitchController@getAuthURL');
-
+    $router->get('/streamers', 'TwitchApiController@getStreamers');
 });
 
 $router->get('redirecturi', function () use ($router) {
