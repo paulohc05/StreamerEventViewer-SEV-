@@ -5,6 +5,26 @@
         <!-- Add a placeholder for the Twitch embed -->
         <div id="twitch-embed"></div>
 
+        <br />
+
+        <div class="container" v-if="events.length > 0">
+            <div class="row">
+                <div class="col-md-12">
+                    <h5 class="border-bottom border-gray pb-2 mb-0">Recent updates</h5>
+
+                    <div class="media text-muted pt-3 text-left" v-for="(event, index) in events" :key="index">
+                        <img class="bd-placeholder-img mr-2 rounded" :src="channel_thumb" :alt="channel" width="32" height="32">
+                        <p class="media-body pb-3 mb-0 small lh-125 border-bottom border-gray">
+                            <strong class="d-block text-gray-dark">@{{ channel }}</strong>
+                            {{ event }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <hr />
+
         <div class="container">
             <div class="row">
                 <div v-for="(item, index) in streamers" :key="index" class="col-md-3">
@@ -29,13 +49,17 @@
 
 <script>
   import axios from 'axios';
+  import Pusher from 'pusher-js';
 
   export default {
       name: 'dashboard-page', 
       data() {
           return {
               token: '', 
-              streamers: []
+              channel: '', 
+              channel_thumb: '', 
+              streamers: [], 
+              events: []
           }
       }, 
       created() {
@@ -85,17 +109,31 @@
         embedVideo(user_id, user_name) {
             var vm = this;
 
+            vm.channel = user_name;
             document.getElementById("twitch-embed").innerHTML = "";
 
             var twitchEmbed = new Twitch.Embed("twitch-embed", {
                 width: 854,
                 height: 480,
-                channel: user_name
+                channel: vm.channel
             });
 
             axios.get('./api/streamer/' + user_id + '/' + vm.token)
             .then(response => {
-                console.log(response);
+                vm.events = [];
+
+                var responseData = response.data;
+                vm.channel_thumb = responseData.profile_image_url;
+
+                vm.events.push('STREAMING: ' + responseData.title);
+
+                var pusher = new Pusher('2ad17b749b0c399d9336', {
+                    cluster: 'us3',
+                });
+                var channel = pusher.subscribe(vm.channel);
+                channel.bind('streamer_event', function(data) {
+                    vm.events.unshift(data.message);
+                });
             })
             .catch(e => {
                 console.log(e);

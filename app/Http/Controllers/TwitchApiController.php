@@ -42,9 +42,38 @@ class TwitchApiController extends Controller
             env('TWITCH_CLIENT_ID')), env('TWITCH_CLIENT_ID'), env('TWITCH_SECRET')
         );
 
+        // Get User Data
+        try {
+            $userData = $twitchApi->getUsersApi()->getUserById($twitchID)->getBody()->getContents();
+            $userData = json_decode($userData);
+        }
+        catch (\Exception $e) {
+            return $e->getMessage();
+        }
+
+        // Get Streamer Data
+        try {
+            $streamData = $twitchApi->getStreamsApi()->getStreamForUserId($twitchID)->getBody()->getContents();
+            $streamData = json_decode($streamData);
+        }
+        catch (\Exception $e) {
+            return $e->getMessage();
+        }
+
         $callbackUri = url('/', [], true) . '/api/callback';
 
         $twitchApi->getWebhooksSubscriptionApi()->subscribeToStream($twitchID, $accessToken, $callbackUri);
+
+        return [
+            'user_id' => $twitchID, 
+            'display_name' => $userData->data[0]->display_name, 
+            'profile_image_url' => $userData->data[0]->profile_image_url, 
+            'title' => $streamData->data[0]->title, 
+            'type' => $streamData->data[0]->type, 
+            'language' => $streamData->data[0]->language, 
+            'viewer_count' => $streamData->data[0]->viewer_count, 
+            'thumbnail_url' => $streamData->data[0]->thumbnail_url
+        ];
     }
 
     public function callback(Request $request)
