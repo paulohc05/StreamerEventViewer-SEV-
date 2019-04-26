@@ -24,6 +24,6 @@ class AuthTwitchController extends Controller
 
         $redirectUri = url('/', [], true) . '/#/dashboard';
 
-        return $twitchApi->getOauthApi()->getAuthURL($redirectUri, 'token', 'user:edit+channel_read+channel:read:subscriptions');
+        return $twitchApi->getOauthApi()->getAuthURL(urlencode($redirectUri), 'token', 'user:edit+channel_read+channel:read:subscriptions');
     }
 }
