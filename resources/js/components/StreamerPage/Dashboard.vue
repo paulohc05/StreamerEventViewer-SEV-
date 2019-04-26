@@ -2,6 +2,9 @@
     <section class="section text-center">
         <h1>Streaming Page</h1>
 
+        <!-- Add a placeholder for the Twitch embed -->
+        <div id="twitch-embed"></div>
+
         <div class="container">
             <div class="row">
                 <div v-for="(item, index) in streamers" :key="index" class="col-md-3">
@@ -26,23 +29,43 @@
 
 <script>
   import axios from 'axios';
-  
+
   export default {
       name: 'dashboard-page', 
       data() {
           return {
+              token: '', 
               streamers: []
           }
       }, 
       created() {
         var vm = this;
 
+        vm.token = vm.getAccessToken();
         vm.streamers = vm.listOfStreamers();
       }, 
       mounted() {
         var vm = this;
+
+        var twitchScript = document.createElement('script');
+        twitchScript.type = "text/javascript";
+        twitchScript.src = "https://embed.twitch.tv/embed/v1.js";
+        document.head.appendChild(twitchScript);
       }, 
       methods: {
+        getAccessToken() {
+            var vm = this;
+
+            var token = null;
+            if (vm.$route.hash.includes("access_token")) {
+                var pattern = new RegExp(/access_token=(.*?)&/);
+                var regex=vm.$route.hash.match(pattern);
+
+                token = regex[1] ? regex[1] : token;
+            }
+            
+            return token;
+        }, 
         listOfStreamers() {
             var vm = this;
 
@@ -62,8 +85,21 @@
         embedVideo(user_id, user_name) {
             var vm = this;
 
-            console.log(user_id + ' ' + user_name);
+            document.getElementById("twitch-embed").innerHTML = "";
 
+            var twitchEmbed = new Twitch.Embed("twitch-embed", {
+                width: 854,
+                height: 480,
+                channel: user_name
+            });
+
+            axios.get('./api/streamer/' + user_id + '/' + vm.token)
+            .then(response => {
+                console.log(response);
+            })
+            .catch(e => {
+                console.log(e);
+            });
         }
       }
   }

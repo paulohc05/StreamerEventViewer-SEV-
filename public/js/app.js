@@ -45332,6 +45332,9 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 //
 //
 //
+//
+//
+//
 
 
 
@@ -45339,19 +45342,39 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
     name: 'dashboard-page',
     data: function data() {
         return {
+            token: '',
             streamers: []
         };
     },
     created: function created() {
         var vm = this;
 
+        vm.token = vm.getAccessToken();
         vm.streamers = vm.listOfStreamers();
     },
     mounted: function mounted() {
         var vm = this;
+
+        var twitchScript = document.createElement('script');
+        twitchScript.type = "text/javascript";
+        twitchScript.src = "https://embed.twitch.tv/embed/v1.js";
+        document.head.appendChild(twitchScript);
     },
 
     methods: {
+        getAccessToken: function getAccessToken() {
+            var vm = this;
+
+            var token = null;
+            if (vm.$route.hash.includes("access_token")) {
+                var pattern = new RegExp(/access_token=(.*?)&/);
+                var regex = vm.$route.hash.match(pattern);
+
+                token = regex[1] ? regex[1] : token;
+            }
+
+            return token;
+        },
         listOfStreamers: function listOfStreamers() {
             var vm = this;
 
@@ -45369,7 +45392,19 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
         embedVideo: function embedVideo(user_id, user_name) {
             var vm = this;
 
-            console.log(user_id + ' ' + user_name);
+            document.getElementById("twitch-embed").innerHTML = "";
+
+            var twitchEmbed = new Twitch.Embed("twitch-embed", {
+                width: 854,
+                height: 480,
+                channel: user_name
+            });
+
+            __WEBPACK_IMPORTED_MODULE_0_axios___default.a.get('./api/streamer/' + user_id + '/' + vm.token).then(function (response) {
+                console.log(response);
+            }).catch(function (e) {
+                console.log(e);
+            });
         }
     }
 });
@@ -46274,6 +46309,8 @@ var render = function() {
   var _c = _vm._self._c || _h
   return _c("section", { staticClass: "section text-center" }, [
     _c("h1", [_vm._v("Streaming Page")]),
+    _vm._v(" "),
+    _c("div", { attrs: { id: "twitch-embed" } }),
     _vm._v(" "),
     _c("div", { staticClass: "container" }, [
       _c(
