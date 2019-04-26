@@ -22,7 +22,7 @@ class AuthTwitchController extends Controller
             env('TWITCH_CLIENT_ID')), env('TWITCH_CLIENT_ID'), env('TWITCH_SECRET')
         );
 
-        $redirectUri = 'redirecturi';
+        $redirectUri = url('/', [], true) . 'redirecturi';
 
         return $twitchApi->getOauthApi()->getAuthURL($redirectUri, 'token', 'user:edit+channel_read+channel:read:subscriptions');
     }
