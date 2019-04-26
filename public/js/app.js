@@ -45442,6 +45442,8 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
                 channel.bind('streamer_event', function (data) {
                     vm.events.unshift(data.message);
                 });
+
+                console.log(vm.events);
             }).catch(function (e) {
                 console.log(e);
             });
