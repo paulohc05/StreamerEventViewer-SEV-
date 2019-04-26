@@ -16,6 +16,8 @@ $router->group([
 ], function ($router) {
     $router->get('/auth', 'AuthTwitchController@getAuthURL');
     $router->get('/streamers', 'TwitchApiController@getStreamers');
+    $router->get('/streamer/{twitchID}/{accessToken}', 'TwitchApiController@getStreamer');
+    $router->get('/callback', 'TwitchApiController@callback');
 });
 
 $router->get('redirecturi', function () use ($router) {
