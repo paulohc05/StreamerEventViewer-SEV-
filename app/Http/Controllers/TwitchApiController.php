@@ -33,7 +33,6 @@ class TwitchApiController extends Controller
 
         $listOfStreamers = json_decode($listOfStreamers);
 
-        Log::debug($listOfStreamers->data);
         return response()->json($listOfStreamers->data);
     }
 
@@ -50,6 +49,12 @@ class TwitchApiController extends Controller
 
     public function callback(Request $request)
     {
-        die('Great Scott! Callback!');
+        if ('GET' === $request->method()) {
+            Log::debug($request->query());
+        } else {
+            return response()->json(['error' => "The specified method for the request is invalid", 'code' => '405'], 405);
+        }
+
+        return response()->json(['message' => 'Success'], 200);
     }
 }
