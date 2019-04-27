@@ -108,6 +108,11 @@
 
                 token = regex[1] ? regex[1] : token;
             }
+
+            // If token is null, redirect to login page
+            if (null === token) {
+                window.location.href = './#/login';
+            }
             
             return token;
         }, 

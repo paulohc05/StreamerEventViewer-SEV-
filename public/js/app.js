@@ -45421,6 +45421,11 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
                 token = regex[1] ? regex[1] : token;
             }
 
+            // If token is null, redirect to login page
+            if (null === token) {
+                window.location.href = './#/login';
+            }
+
             return token;
         },
         listOfStreamers: function listOfStreamers() {
