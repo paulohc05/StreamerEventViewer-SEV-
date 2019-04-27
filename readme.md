@@ -4,7 +4,9 @@ An application that helps audiences to watch their favourite Twitch Streamers' e
 
 ## Getting Started
 
-These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. See deployment for notes on how to deploy the project on a live system.
+The application has only two pages which:
+- [Login Page](https://sev001.herokuapp.com/#/login): This page is the login page where the users will be redirected to https://passport.twitch.tv/sessions/new and the users is required to log in using their Twitch account.
+- [Dashboard Page](https://sev001.herokuapp.com/#/dashboard): This page is the dashboard page where the users are able to stream their favourite Twitch Streamers.
 
 ## Built With
 
