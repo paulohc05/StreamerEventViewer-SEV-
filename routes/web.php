@@ -15,6 +15,7 @@ $router->group([
     'prefix' => 'api'
 ], function ($router) {
     $router->get('/auth', 'AuthTwitchController@getAuthURL');
+    $router->get('/channel/{keyword}', 'TwitchApiController@getChannel');
     $router->get('/streamers', 'TwitchApiController@getStreamers');
     $router->get('/streamer/{twitchID}/{accessToken}', 'TwitchApiController@getStreamer');
     $router->get('/callback', 'TwitchApiController@callback');

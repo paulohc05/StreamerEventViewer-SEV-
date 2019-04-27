@@ -2,6 +2,21 @@
     <section class="section text-center">
         <h1>Streaming Page</h1>
 
+        <form v-on:submit.prevent="searchWatch()">
+            <div class="container">
+                <div class="row">
+                    <div class="input-group mb-12">
+                        <input type="text" v-model="searchChannel" class="form-control" placeholder="Search by username">
+                        <div class="input-group-append">
+                            <button class="btn btn-outline-secondary" type="submit">Search and Watch</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+
+        <br />
+
         <!-- Add a placeholder for the Twitch embed -->
         <div id="twitch-embed"></div>
 
@@ -57,6 +72,7 @@
           return {
               token: '', 
               channel: '', 
+              searchChannel: '', 
               channel_thumb: '', 
               streamers: [], 
               events: []
@@ -65,12 +81,16 @@
       created() {
         var vm = this;
 
+        // Getting the Access Token from the URI before DOM is rendered.
         vm.token = vm.getAccessToken();
+
+        // Getting the Streamers Data as JSON format.
         vm.streamers = vm.listOfStreamers();
       }, 
       mounted() {
         var vm = this;
 
+        // Adding the Twitch embed script as it is required to stream the video.
         var twitchScript = document.createElement('script');
         twitchScript.type = "text/javascript";
         twitchScript.src = "https://embed.twitch.tv/embed/v1.js";
@@ -80,6 +100,7 @@
         getAccessToken() {
             var vm = this;
 
+            // Extract the Access Token from the URI using Regular Expression
             var token = null;
             if (vm.$route.hash.includes("access_token")) {
                 var pattern = new RegExp(/access_token=(.*?)&/);
@@ -93,8 +114,10 @@
         listOfStreamers() {
             var vm = this;
 
+            // Getting Streamers Data with Axios which will be listed on the Dashboard page.
             axios.get('./api/streamers')
             .then(response => {
+                // Modify the thumbnail_url to a specific dimension.
                 vm.streamers = (response.data).map(function(data) {
                     var temp = Object.assign({}, data);
                     var thumbnail_url = temp.thumbnail_url;
@@ -106,12 +129,36 @@
                 console.log(error);
             });
         }, 
+        searchWatch() {
+            var vm = this;
+
+            // Fetching the User Data and embed it if the keyword is matched.
+            fetch('./api/channel/' + vm.searchChannel).then(function (response) {
+                response.text().then(function (data) {
+                    var dataObj = JSON.parse(data);
+                    if (Object.keys(dataObj).length === 0) {
+                        // If there is no result, will clear the events and the twitch-embed element.
+                        vm.events = [];
+                        document.getElementById("twitch-embed").innerHTML = "";
+                        return false;
+                    } else {
+                        // If the keyword is found, then will embed the video.
+                        vm.embedVideo(dataObj.id, dataObj.display_name);
+                    }
+                });
+            }).catch(function (error) {
+                console.log(error);
+            });
+        }, 
         embedVideo(user_id, user_name) {
             var vm = this;
 
+            // Assign the user_name as the Stream Channel.
             vm.channel = user_name;
             document.getElementById("twitch-embed").innerHTML = "";
 
+            // Reference: https://dev.twitch.tv/docs/embed/everything/
+            // Create a Twitch.Embed object that will render within the "twitch-embed" root element.
             var twitchEmbed = new Twitch.Embed("twitch-embed", {
                 width: 854,
                 height: 480,
@@ -120,17 +167,24 @@
 
             axios.get('./api/streamer/' + user_id + '/' + vm.token)
             .then(response => {
+                // Clear the event array when the user switches to other channel.
                 vm.events = [];
 
+                // Add the current channel data into the event.
+                // Which will be appeared immediately once user is on the channel.
                 var responseData = response.data;
                 vm.channel_thumb = responseData.profile_image_url;
-
                 vm.events.push('STREAMING: ' + responseData.title);
 
+                // Open a connection to channel using the KEY and CLUSTER.
                 var pusher = new Pusher('2ad17b749b0c399d9336', {
                     cluster: 'us3',
                 });
+
+                // Subscribe via channel (which is the user_name)
                 var channel = pusher.subscribe(vm.channel);
+
+                // Bind it with the event. In here, I set `streamer_event` as the event name.
                 channel.bind('streamer_event', function(data) {
                     vm.events.unshift(data.message);
                 });

@@ -16439,7 +16439,7 @@ module.exports = Cancel;
 /***/ (function(module, exports, __webpack_require__) {
 
 __webpack_require__(135);
-module.exports = __webpack_require__(336);
+module.exports = __webpack_require__(337);
 
 
 /***/ }),
@@ -45195,6 +45195,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
         proceed: function proceed() {
             var vm = this;
 
+            // Get the authentication URL and redirect the User.
             fetch('./api/auth').then(function (response) {
                 response.text().then(function (url) {
                     vm.loading = false;
@@ -45260,7 +45261,7 @@ var normalizeComponent = __webpack_require__(30)
 /* script */
 var __vue_script__ = __webpack_require__(315)
 /* template */
-var __vue_template__ = __webpack_require__(335)
+var __vue_template__ = __webpack_require__(336)
 /* template functional */
 var __vue_template_functional__ = false
 /* styles */
@@ -45306,8 +45307,23 @@ module.exports = Component.exports
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_axios__ = __webpack_require__(316);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_axios___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_axios__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_pusher_js__ = __webpack_require__(341);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_pusher_js__ = __webpack_require__(335);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_pusher_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_pusher_js__);
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 //
 //
 //
@@ -45367,6 +45383,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
         return {
             token: '',
             channel: '',
+            searchChannel: '',
             channel_thumb: '',
             streamers: [],
             events: []
@@ -45375,12 +45392,16 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
     created: function created() {
         var vm = this;
 
+        // Getting the Access Token from the URI before DOM is rendered.
         vm.token = vm.getAccessToken();
+
+        // Getting the Streamers Data as JSON format.
         vm.streamers = vm.listOfStreamers();
     },
     mounted: function mounted() {
         var vm = this;
 
+        // Adding the Twitch embed script as it is required to stream the video.
         var twitchScript = document.createElement('script');
         twitchScript.type = "text/javascript";
         twitchScript.src = "https://embed.twitch.tv/embed/v1.js";
@@ -45391,6 +45412,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
         getAccessToken: function getAccessToken() {
             var vm = this;
 
+            // Extract the Access Token from the URI using Regular Expression
             var token = null;
             if (vm.$route.hash.includes("access_token")) {
                 var pattern = new RegExp(/access_token=(.*?)&/);
@@ -45404,7 +45426,9 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
         listOfStreamers: function listOfStreamers() {
             var vm = this;
 
+            // Getting Streamers Data with Axios which will be listed on the Dashboard page.
             __WEBPACK_IMPORTED_MODULE_0_axios___default.a.get('./api/streamers').then(function (response) {
+                // Modify the thumbnail_url to a specific dimension.
                 vm.streamers = response.data.map(function (data) {
                     var temp = Object.assign({}, data);
                     var thumbnail_url = temp.thumbnail_url;
@@ -45415,12 +45439,36 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
                 console.log(error);
             });
         },
+        searchWatch: function searchWatch() {
+            var vm = this;
+
+            // Fetching the User Data and embed it if the keyword is matched.
+            fetch('./api/channel/' + vm.searchChannel).then(function (response) {
+                response.text().then(function (data) {
+                    var dataObj = JSON.parse(data);
+                    if (Object.keys(dataObj).length === 0) {
+                        // If there is no result, will clear the events and the twitch-embed element.
+                        vm.events = [];
+                        document.getElementById("twitch-embed").innerHTML = "";
+                        return false;
+                    } else {
+                        // If the keyword is found, then will embed the video.
+                        vm.embedVideo(dataObj.id, dataObj.display_name);
+                    }
+                });
+            }).catch(function (error) {
+                console.log(error);
+            });
+        },
         embedVideo: function embedVideo(user_id, user_name) {
             var vm = this;
 
+            // Assign the user_name as the Stream Channel.
             vm.channel = user_name;
             document.getElementById("twitch-embed").innerHTML = "";
 
+            // Reference: https://dev.twitch.tv/docs/embed/everything/
+            // Create a Twitch.Embed object that will render within the "twitch-embed" root element.
             var twitchEmbed = new Twitch.Embed("twitch-embed", {
                 width: 854,
                 height: 480,
@@ -45428,17 +45476,24 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
             });
 
             __WEBPACK_IMPORTED_MODULE_0_axios___default.a.get('./api/streamer/' + user_id + '/' + vm.token).then(function (response) {
+                // Clear the event array when the user switches to other channel.
                 vm.events = [];
 
+                // Add the current channel data into the event.
+                // Which will be appeared immediately once user is on the channel.
                 var responseData = response.data;
                 vm.channel_thumb = responseData.profile_image_url;
-
                 vm.events.push('STREAMING: ' + responseData.title);
 
+                // Open a connection to channel using the KEY and CLUSTER.
                 var pusher = new __WEBPACK_IMPORTED_MODULE_1_pusher_js___default.a('2ad17b749b0c399d9336', {
                     cluster: 'us3'
                 });
+
+                // Subscribe via channel (which is the user_name)
                 var channel = pusher.subscribe(vm.channel);
+
+                // Bind it with the event. In here, I set `streamer_event` as the event name.
                 channel.bind('streamer_event', function (data) {
                     vm.events.unshift(data.message);
                 });
@@ -46343,169 +46398,6 @@ module.exports = function spread(callback) {
 
 /***/ }),
 /* 335 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var render = function() {
-  var _vm = this
-  var _h = _vm.$createElement
-  var _c = _vm._self._c || _h
-  return _c("section", { staticClass: "section text-center" }, [
-    _c("h1", [_vm._v("Streaming Page")]),
-    _vm._v(" "),
-    _c("div", { attrs: { id: "twitch-embed" } }),
-    _vm._v(" "),
-    _c("br"),
-    _vm._v(" "),
-    _vm.events.length > 0
-      ? _c("div", { staticClass: "container" }, [
-          _c("div", { staticClass: "row" }, [
-            _c(
-              "div",
-              { staticClass: "col-md-12" },
-              [
-                _c(
-                  "h5",
-                  { staticClass: "border-bottom border-gray pb-2 mb-0" },
-                  [_vm._v("Recent updates")]
-                ),
-                _vm._v(" "),
-                _vm._l(_vm.events, function(event, index) {
-                  return _c(
-                    "div",
-                    {
-                      key: index,
-                      staticClass: "media text-muted pt-3 text-left"
-                    },
-                    [
-                      _c("img", {
-                        staticClass: "bd-placeholder-img mr-2 rounded",
-                        attrs: {
-                          src: _vm.channel_thumb,
-                          alt: _vm.channel,
-                          width: "32",
-                          height: "32"
-                        }
-                      }),
-                      _vm._v(" "),
-                      _c(
-                        "p",
-                        {
-                          staticClass:
-                            "media-body pb-3 mb-0 small lh-125 border-bottom border-gray"
-                        },
-                        [
-                          _c(
-                            "strong",
-                            { staticClass: "d-block text-gray-dark" },
-                            [_vm._v("@" + _vm._s(_vm.channel))]
-                          ),
-                          _vm._v(
-                            "\n                        " +
-                              _vm._s(event) +
-                              "\n                    "
-                          )
-                        ]
-                      )
-                    ]
-                  )
-                })
-              ],
-              2
-            )
-          ])
-        ])
-      : _vm._e(),
-    _vm._v(" "),
-    _c("hr"),
-    _vm._v(" "),
-    _c("div", { staticClass: "container" }, [
-      _c(
-        "div",
-        { staticClass: "row" },
-        _vm._l(_vm.streamers, function(item, index) {
-          return _c("div", { key: index, staticClass: "col-md-3" }, [
-            _c("div", { staticClass: "card" }, [
-              _c("img", {
-                staticClass: "card-img-top",
-                attrs: { src: item.thumbnail_url, alt: item.title }
-              }),
-              _vm._v(" "),
-              _c("div", { staticClass: "card-body" }, [
-                _c("h5", { staticClass: "card-title" }, [
-                  _vm._v(_vm._s(item.title))
-                ]),
-                _vm._v(" "),
-                _c("p", { staticClass: "card-text" }, [
-                  _vm._v(
-                    "\n                            Username: " +
-                      _vm._s(item.user_name) +
-                      " "
-                  ),
-                  _c("br"),
-                  _vm._v(
-                    "\n                            Type: " +
-                      _vm._s(item.type) +
-                      " "
-                  ),
-                  _c("br"),
-                  _vm._v(
-                    "\n                            Language: " +
-                      _vm._s(item.language) +
-                      " "
-                  ),
-                  _c("br"),
-                  _vm._v(
-                    "\n                            Viewers: " +
-                      _vm._s(item.viewer_count) +
-                      " "
-                  ),
-                  _c("br")
-                ]),
-                _vm._v(" "),
-                _c(
-                  "a",
-                  {
-                    staticClass: "btn btn-primary",
-                    attrs: { href: "javascript:void(0)" },
-                    on: {
-                      click: function($event) {
-                        return _vm.embedVideo(item.user_id, item.user_name)
-                      }
-                    }
-                  },
-                  [_vm._v("Stream")]
-                )
-              ])
-            ])
-          ])
-        }),
-        0
-      )
-    ])
-  ])
-}
-var staticRenderFns = []
-render._withStripped = true
-module.exports = { render: render, staticRenderFns: staticRenderFns }
-if (false) {
-  module.hot.accept()
-  if (module.hot.data) {
-    require("vue-hot-reload-api")      .rerender("data-v-70df802c", module.exports)
-  }
-}
-
-/***/ }),
-/* 336 */
-/***/ (function(module, exports) {
-
-// removed by extract-text-webpack-plugin
-
-/***/ }),
-/* 337 */,
-/* 338 */,
-/* 339 */,
-/* 340 */,
-/* 341 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /*!
@@ -55392,6 +55284,223 @@ return /******/ (function(modules) { // webpackBootstrap
 /******/ ])
 });
 ;
+
+/***/ }),
+/* 336 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var render = function() {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _c("section", { staticClass: "section text-center" }, [
+    _c("h1", [_vm._v("Streaming Page")]),
+    _vm._v(" "),
+    _c(
+      "form",
+      {
+        on: {
+          submit: function($event) {
+            $event.preventDefault()
+            return _vm.searchWatch()
+          }
+        }
+      },
+      [
+        _c("div", { staticClass: "container" }, [
+          _c("div", { staticClass: "row" }, [
+            _c("div", { staticClass: "input-group mb-12" }, [
+              _c("input", {
+                directives: [
+                  {
+                    name: "model",
+                    rawName: "v-model",
+                    value: _vm.searchChannel,
+                    expression: "searchChannel"
+                  }
+                ],
+                staticClass: "form-control",
+                attrs: { type: "text", placeholder: "Search by username" },
+                domProps: { value: _vm.searchChannel },
+                on: {
+                  input: function($event) {
+                    if ($event.target.composing) {
+                      return
+                    }
+                    _vm.searchChannel = $event.target.value
+                  }
+                }
+              }),
+              _vm._v(" "),
+              _vm._m(0)
+            ])
+          ])
+        ])
+      ]
+    ),
+    _vm._v(" "),
+    _c("br"),
+    _vm._v(" "),
+    _c("div", { attrs: { id: "twitch-embed" } }),
+    _vm._v(" "),
+    _c("br"),
+    _vm._v(" "),
+    _vm.events.length > 0
+      ? _c("div", { staticClass: "container" }, [
+          _c("div", { staticClass: "row" }, [
+            _c(
+              "div",
+              { staticClass: "col-md-12" },
+              [
+                _c(
+                  "h5",
+                  { staticClass: "border-bottom border-gray pb-2 mb-0" },
+                  [_vm._v("Recent updates")]
+                ),
+                _vm._v(" "),
+                _vm._l(_vm.events, function(event, index) {
+                  return _c(
+                    "div",
+                    {
+                      key: index,
+                      staticClass: "media text-muted pt-3 text-left"
+                    },
+                    [
+                      _c("img", {
+                        staticClass: "bd-placeholder-img mr-2 rounded",
+                        attrs: {
+                          src: _vm.channel_thumb,
+                          alt: _vm.channel,
+                          width: "32",
+                          height: "32"
+                        }
+                      }),
+                      _vm._v(" "),
+                      _c(
+                        "p",
+                        {
+                          staticClass:
+                            "media-body pb-3 mb-0 small lh-125 border-bottom border-gray"
+                        },
+                        [
+                          _c(
+                            "strong",
+                            { staticClass: "d-block text-gray-dark" },
+                            [_vm._v("@" + _vm._s(_vm.channel))]
+                          ),
+                          _vm._v(
+                            "\n                        " +
+                              _vm._s(event) +
+                              "\n                    "
+                          )
+                        ]
+                      )
+                    ]
+                  )
+                })
+              ],
+              2
+            )
+          ])
+        ])
+      : _vm._e(),
+    _vm._v(" "),
+    _c("hr"),
+    _vm._v(" "),
+    _c("div", { staticClass: "container" }, [
+      _c(
+        "div",
+        { staticClass: "row" },
+        _vm._l(_vm.streamers, function(item, index) {
+          return _c("div", { key: index, staticClass: "col-md-3" }, [
+            _c("div", { staticClass: "card" }, [
+              _c("img", {
+                staticClass: "card-img-top",
+                attrs: { src: item.thumbnail_url, alt: item.title }
+              }),
+              _vm._v(" "),
+              _c("div", { staticClass: "card-body" }, [
+                _c("h5", { staticClass: "card-title" }, [
+                  _vm._v(_vm._s(item.title))
+                ]),
+                _vm._v(" "),
+                _c("p", { staticClass: "card-text" }, [
+                  _vm._v(
+                    "\n                            Username: " +
+                      _vm._s(item.user_name) +
+                      " "
+                  ),
+                  _c("br"),
+                  _vm._v(
+                    "\n                            Type: " +
+                      _vm._s(item.type) +
+                      " "
+                  ),
+                  _c("br"),
+                  _vm._v(
+                    "\n                            Language: " +
+                      _vm._s(item.language) +
+                      " "
+                  ),
+                  _c("br"),
+                  _vm._v(
+                    "\n                            Viewers: " +
+                      _vm._s(item.viewer_count) +
+                      " "
+                  ),
+                  _c("br")
+                ]),
+                _vm._v(" "),
+                _c(
+                  "a",
+                  {
+                    staticClass: "btn btn-primary",
+                    attrs: { href: "javascript:void(0)" },
+                    on: {
+                      click: function($event) {
+                        return _vm.embedVideo(item.user_id, item.user_name)
+                      }
+                    }
+                  },
+                  [_vm._v("Stream")]
+                )
+              ])
+            ])
+          ])
+        }),
+        0
+      )
+    ])
+  ])
+}
+var staticRenderFns = [
+  function() {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("div", { staticClass: "input-group-append" }, [
+      _c(
+        "button",
+        { staticClass: "btn btn-outline-secondary", attrs: { type: "submit" } },
+        [_vm._v("Search and Watch")]
+      )
+    ])
+  }
+]
+render._withStripped = true
+module.exports = { render: render, staticRenderFns: staticRenderFns }
+if (false) {
+  module.hot.accept()
+  if (module.hot.data) {
+    require("vue-hot-reload-api")      .rerender("data-v-70df802c", module.exports)
+  }
+}
+
+/***/ }),
+/* 337 */
+/***/ (function(module, exports) {
+
+// removed by extract-text-webpack-plugin
 
 /***/ })
 /******/ ]);

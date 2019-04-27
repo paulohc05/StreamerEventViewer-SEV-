@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use NewTwitchApi;
+// use NewTwitchApi;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use GuzzleHttp\Exception\GuzzleException;
 
 class TwitchApiController extends Controller
 {
@@ -15,19 +16,18 @@ class TwitchApiController extends Controller
      */
     public function __construct()
     {
-        //
+        parent::__construct();
     }
 
+    /**
+     * New Twitch API Reference: https://dev.twitch.tv/docs/api/reference/
+     */
     public function getStreamers()
     {
-        $twitchApi = new NewTwitchApi\NewTwitchApi(new NewTwitchApi\HelixGuzzleClient(
-            env('TWITCH_CLIENT_ID')), env('TWITCH_CLIENT_ID'), env('TWITCH_SECRET')
-        );
-
         try {
-            $listOfStreamers = $twitchApi->getStreamsApi()->getStreams()->getBody()->getContents();
-        }
-        catch (\Exception $e) {
+            // Make the API call to get Streamers.
+            $listOfStreamers = $this->newTwitchApi->getStreamsApi()->getStreams()->getBody()->getContents();
+        } catch (GuzzleException $e) {
             return $e->getMessage();
         }
 
@@ -36,33 +36,53 @@ class TwitchApiController extends Controller
         return response()->json($listOfStreamers->data);
     }
 
+    /**
+     * New Twitch API Reference: https://dev.twitch.tv/docs/api/reference/
+     * Getting User Data by keyword
+     */
+    public function getChannel(string $keyword)
+    {
+        // Get User Data by keyword
+        try {
+            // Make the API call to get User Data by keyword and return it as JSON.
+            $userData = $this->newTwitchApi->getUsersApi()->getUserByUsername($keyword)->getBody()->getContents();
+            $userData = json_decode($userData);
+        } catch (GuzzleException $e) {
+            return $e->getMessage();
+        }
+        
+        // Return the User Data as JSON if found, yet return null if the keyword is not matched.
+        return response()->json($userData->data ? $userData->data[0] : null);
+    }
+
+    /**
+     * New Twitch API Reference: https://dev.twitch.tv/docs/api/reference/
+     */
     public function getStreamer(string $twitchID, string $accessToken)
     {
-        $twitchApi = new NewTwitchApi\NewTwitchApi(new NewTwitchApi\HelixGuzzleClient(
-            env('TWITCH_CLIENT_ID')), env('TWITCH_CLIENT_ID'), env('TWITCH_SECRET')
-        );
-
         // Get User Data
         try {
-            $userData = $twitchApi->getUsersApi()->getUserById($twitchID)->getBody()->getContents();
+            // Make the API call to get User Data which will be combined with Stream Data and return it as JSON.
+            $userData = $this->newTwitchApi->getUsersApi()->getUserById($twitchID)->getBody()->getContents();
             $userData = json_decode($userData);
-        }
-        catch (\Exception $e) {
+        } catch (GuzzleException $e) {
             return $e->getMessage();
         }
 
         // Get Streamer Data
         try {
-            $streamData = $twitchApi->getStreamsApi()->getStreamForUserId($twitchID)->getBody()->getContents();
+            // Make the API call to get Stream Data which will be combined with User Data and return it as JSON.
+            $streamData = $this->newTwitchApi->getStreamsApi()->getStreamForUserId($twitchID)->getBody()->getContents();
             $streamData = json_decode($streamData);
-        }
-        catch (\Exception $e) {
+        } catch (GuzzleException $e) {
             return $e->getMessage();
         }
 
         $callbackUri = url('/', [], true) . '/api/callback';
 
-        $twitchApi->getWebhooksSubscriptionApi()->subscribeToStream($twitchID, $accessToken, $callbackUri);
+        // Gets the Webhook subscriptions of a user identified by a User ID and Access Token.
+        // Return stream broadcast by specified user ID.
+        $this->newTwitchApi->getWebhooksSubscriptionApi()->subscribeToStream($twitchID, $accessToken, $callbackUri);
 
         return [
             'user_id' => $twitchID, 
@@ -76,9 +96,13 @@ class TwitchApiController extends Controller
         ];
     }
 
+    /**
+     * The callback that will be provided for the API subscription.
+     */
     public function callback(Request $request)
     {
         if ('GET' === $request->method()) {
+            // At the moment, I put it in Log.
             Log::debug($request->query());
         } else {
             return response()->json(['error' => "The specified method for the request is invalid", 'code' => '405'], 405);

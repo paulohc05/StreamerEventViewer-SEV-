@@ -20,6 +20,7 @@
             proceed() {
                 var vm = this;
 
+                // Get the authentication URL and redirect the User.
                 fetch('./api/auth').then(function (response) {
                     response.text().then(function (url) {
                         vm.loading = false;

@@ -13,17 +13,19 @@ class AuthTwitchController extends Controller
      */
     public function __construct()
     {
-        //
+        parent::__construct();
     }
 
     public function getAuthURL()
     {
-        $twitchApi = new NewTwitchApi\NewTwitchApi(new NewTwitchApi\HelixGuzzleClient(
-            env('TWITCH_CLIENT_ID')), env('TWITCH_CLIENT_ID'), env('TWITCH_SECRET')
-        );
+        $responseType = "token";
+        $scope = "user:edit+channel_read+channel:read:subscriptions";
 
         $redirectUri = url('/', [], true) . '/#/dashboard';
 
-        return $twitchApi->getOauthApi()->getAuthURL(urlencode($redirectUri), 'token', 'user:edit+channel_read+channel:read:subscriptions');
+        // Generate a full authentication URL with client-id, redirect-uri, type of response, and the scopes.
+        // Which will redirect User to log in using their Twitch account.
+        // Once the User is successfully logged in, will be redirected them to the Dashboard page.
+        return $this->newTwitchApi->getOauthApi()->getAuthURL(urlencode($redirectUri), $responseType, $scope);
     }
 }
